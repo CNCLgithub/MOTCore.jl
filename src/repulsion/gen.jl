@@ -1,5 +1,7 @@
 export wm_repulsion,
-    repulsion_chain
+    repulsion_chain,
+    repulsion_init,
+    repulsion_kernel
 
 ################################################################################
 # Initial State
@@ -10,10 +12,10 @@ export wm_repulsion,
     y = @trace(uniform(ys[1], ys[2]), :y)
 
     ang = @trace(uniform(0.0, 2*pi), :ang)
-    mag = @trace(normal(wm.vel, 1e-2), :std)
+    mag = @trace(normal(wm.vel, 1.0), :std)
 
-    pos = SVector{2, Float64}([x, y])
-    vel = SVector{2, Float64}([mag*cos(ang), mag*sin(ang)])
+    pos = SVector{2, Float64}(x, y)
+    vel = SVector{2, Float64}(mag*cos(ang), mag*sin(ang))
 
     new_dot::Dot = Dot(wm, pos, vel)
     return new_dot
@@ -37,10 +39,19 @@ end
 # Dynamics
 ################################################################################
 
+
+@gen (static) function repulsion_force(wm::RepulsionWM)
+    fx = @trace(normal(0, wm.force_sd), :fx)
+    fy = @trace(normal(0, wm.force_sd), :fy)
+    f::SVector{2, Float64} = SVector{2, Float64}(fx, fy)
+    return f
+end
+
 @gen (static) function repulsion_kernel(t::Int,
                                         prev_st::RepulsionState,
                                         wm::RepulsionWM)
-    next_st::RepulsionState = step(wm, prev_st)
+    forces = @trace(Gen.Map(repulsion_force)(Fill(wm, wm.n_dots)), :forces)
+    next_st::RepulsionState = step(wm, prev_st, forces)
     return next_st
 end
 
