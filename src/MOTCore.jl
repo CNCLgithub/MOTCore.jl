@@ -23,5 +23,6 @@ include("utils.jl")
 include("objects.jl")
 include("render/render.jl")
 include("repulsion/repulsion.jl")
+include("scholl/scholl.jl")
 
 end # module MOTCore
