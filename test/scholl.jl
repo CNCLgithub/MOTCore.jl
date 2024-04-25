@@ -35,7 +35,7 @@ end
 
 function gen_trial(wm::SchollWM, targets,
                    metrics::Metrics,
-                   max_steps::Int64 = 2000)
+                   max_steps::Int64 = 3000)
     nsteps = length(targets)
     sofar = Vector{SchollState}(undef, nsteps)
     nmetrics = length(metrics.funcs)
@@ -76,27 +76,39 @@ function nearest_obj(state::SchollState)
             d = min(norm(tpos - get_pos(objects[j])), d)
         end
     end
-    clamp(d, 0., 50.) # prevent over-correction
+    clamp(d, 0., 40.) # prevent over-correction
 end
 
 function tddensity(state::SchollState)
     # first 4 are targets
     objects = state.objects
     avg_tdd = 0.0
-    # avg_tdd = Inf
     @inbounds for i = 1:4
-        # tdd = Inf
+        tdd = Inf
+        tpos = get_pos(objects[i])
+        for j = 5:8
+            d = norm(tpos - get_pos(objects[j]))
+            tdd = min(tdd, d)
+        end
+        avg_tdd += tdd
+    end
+    avg_tdd / 4
+end
+
+
+function tdmin(state::SchollState)
+    # first 4 are targets
+    objects = state.objects
+    tdd = Inf
+    @inbounds for i = 1:4
         tpos = get_pos(objects[i])
         for j = 5:8
             # REVIEW: consider l1 distance
             d = norm(tpos - get_pos(objects[j]))
-            # tdd = min(tdd, d)
-            avg_tdd += d
+            tdd = min(tdd, d)
         end
-        # avg_tdd += tdd
     end
-    avg_tdd / 16
-    # avg_tdd / 4
+    tdd
 end
 
 function eccentricity(state::SchollState)
@@ -139,15 +151,15 @@ function test()
                   area_width = 720.0,
                   area_height = 480.0,
                   dot_radius = 20.0,
-                  vel=3.0,
-                  vel_min = 2.0,
+                  vel=3.5,
+                  vel_min = 2.5,
                   vel_max = 4.0,
-                  vel_step = 0.25,
-                  vel_prob = 0.10
+                  vel_step = 0.15,
+                  vel_prob = 0.25
     )
 
     # dataset parameters
-    epoch_dur = 4 # seconds | x3 for total
+    epoch_dur = 5 # seconds | x3 for total
     fps = 24 # frames per second
     epoch_frames = epoch_dur * fps
     tot_frames = 3 * epoch_frames # 3 epochs total
@@ -165,24 +177,21 @@ function test()
     tdd_mu, tdd_sd = stats[:tdd]
     ecc_mu, _ = stats[:ecc]
     # nd_mu, _ = stats[:nobj]
-    nd_mu = 50.0
+    nd_mu = 55.0
 
-    delta_d = 3.0
-    delta_m = 0.5
-    delta_e = 5.0
+    delta_d = -3.5
+    delta_e = 5.5
 
-    D = [max(0.0, tdd_mu - delta_d * tdd_sd), ecc_mu, nd_mu]
-    M = [tdd_mu, ecc_mu, nd_mu]
+    D = [max(0.0, tdd_mu + delta_d * tdd_sd), ecc_mu, nd_mu]
     E = [tdd_mu + delta_e * tdd_sd, ecc_mu, nd_mu]
 
     @show stats
     @show D
-    @show M
     @show E
 
     dataset = []
     cond_list = []
-    base = "test/output/dataset"
+    base = "test/output/$(dname)"
     isdir(base) || mkdir(base)
 
     perms = [
@@ -200,12 +209,13 @@ function test()
                    :epoch => Int32[],
                    :tdd => Float32[],
                    :ecc => Float32[],
-                   :nobj => Float32[])
+                   :nobj => Float32[]
+                   )
     # total of 12 trials
     for (i, perm) = enumerate(perms)
         ne = length(perm)
         targets = repeat(perm, inner = epoch_frames)
-        trial, vals = gen_trial(wm, targets, metrics)
+        trial, vals = gen_trial(wm, targets, metrics, 5000)
         push!(dataset, trial)
         push!(cond_list, [i, false])
         push!(cond_list, [i, true])
@@ -220,10 +230,10 @@ function test()
         display(d)
         append!(df, d)
     end
-    # write_dataset(dataset, "test/$(dname)/examples.json")
-    write_dataset(dataset, "test/$(dname)/dataset.json")
-    write_condlist(cond_list, "test/$(dname)/trial_list.json")
-    CSV.write("test/output/tdd.csv", df)
+    write_dataset(dataset, "$(base)/examples.json")
+    # write_dataset(dataset, "$(base)/dataset.json")
+    # write_condlist(cond_list, "$(base)/trial_list.json")
+    # CSV.write("$(base)/tdd.csv", df)
 end
 
 test();

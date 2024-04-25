@@ -16,12 +16,13 @@ targets = [true, true, true, true, false, false, false, false]
 
 
 function main()
+    dname = "0.3.0"
     local dataset
-    open("test/output/dataset.json", "r") do f
+    open("test/output/$(dname)/dataset.json", "r") do f
         dataset = JSON.parse(f)
     end
 
-    outpath = "test/output/dataset_renders"
+    outpath = "test/output/$(dname)/dataset_renders"
     isdir(outpath) || mkdir(outpath)
 
     ntrials = length(dataset)
