@@ -16,7 +16,7 @@ targets = [true, true, true, true, false, false, false, false]
 
 
 function main()
-    dname = "0.3.0"
+    dname = "0.5.1"
     local dataset
     open("test/output/$(dname)/dataset.json", "r") do f
         dataset = JSON.parse(f)
