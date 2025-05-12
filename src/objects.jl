@@ -1,5 +1,6 @@
 export Thing,
     get_pos,
+    get_vel,
     Object,
     Dot,
     Wall,
