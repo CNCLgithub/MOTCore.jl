@@ -1,7 +1,7 @@
 name = "MOTCore"
 uuid = "5c8d5ed6-9297-4b4e-8c36-1078fadcc608"
 authors = ["belledon <mbelledonne@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"

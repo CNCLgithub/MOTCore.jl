@@ -69,7 +69,7 @@ function step(gm::SchollWM,
         new_pos = pos + new_vel
         if !in_bounds(gm, new_pos)
             new_vel = deflect(gm, pos, new_vel)
-            new_pos = pos + new_vel
+            # new_pos = pos + new_vel
         end
         new_pos = SVector{2, Float64}(
             clamp(new_pos[1], -area_width * 0.5 + dot_radius,
@@ -98,8 +98,10 @@ include("gen.jl")
 
 function in_bounds(gm::SchollWM, position::SVector{2, Float64})
     @unpack area_height, area_width, dot_radius = gm
-    (abs(position[1]) + dot_radius) < 0.5 * area_width &&
-        (abs(position[2]) + dot_radius) < 0.5 * area_height
+    x, y = position
+    dx = abs(x + sign(x)*dot_radius)
+    dy = abs(y + sign(y)*dot_radius)
+    (dx < 0.5 * area_width) && (dy < 0.5 * area_height)
 end
 
 function deflect(gm::SchollWM, pos::T, vel::T) where {T<:SVector{2, Float64}}
