@@ -69,7 +69,6 @@ function step(gm::SchollWM,
         new_pos = pos + new_vel
         if !in_bounds(gm, new_pos)
             new_vel = deflect(gm, pos, new_vel)
-            # new_pos = pos + new_vel
         end
         new_pos = SVector{2, Float64}(
             clamp(new_pos[1], -area_width * 0.5 + dot_radius,
